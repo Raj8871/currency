@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Currency Converter</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="container">
+      <h1>Currency Converter</h1>
+    </div>
+  </header>
+
+  <section class="hero">
+    <div class="container">
+      <h2>Convert Currency with Ease</h2>
+      <p>Quickly exchange currencies and see the results instantly!</p>
+      <div class="upload-box">
+        <label for="amount" class="upload-label">Enter Amount</label>
+        <input type="number" id="amount" class="upload-input" placeholder="Enter amount">
+
+        <label for="from-currency" class="upload-label">From Currency</label>
+        <select id="from-currency" class="upload-input"></select>
+
+        <label for="to-currency" class="upload-label">To Currency</label>
+        <select id="to-currency" class="upload-input"></select>
+
+        <button id="exchange-btn">Exchange</button>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progress-bar">
+          <div class="progress" id="progress"></div>
+        </div>
+        <div id="status-msg"></div>
+
+        <!-- Converted Amount -->
+        <div class="result" id="result"></div>
+
+        <!-- Popup Message -->
+        <div class="popup-message" id="popup-message">
+          Conversion Successful!
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>&copy; 2024 Currency Converter</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+<style>
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: #1a1a2e;
+  color: #e6e6e6;
+  line-height: 1.6;
+}
+
+header {
+  background: #0f3460;
+  color: #fff;
+  padding: 1rem 0;
+}
+
+header .container {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+header h1 {
+  font-size: 2rem;
+}
+
+.hero {
+  text-align: center;
+  padding: 5rem 1rem;
+}
+
+.hero h2 {
+  font-size: 2rem;
+  color: #e94560;
+}
+
+.hero p {
+  margin: 1rem 0 2rem;
+}
+
+.upload-box {
+  background: #16213e;
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 500px;
+  margin: 0 auto;
+  box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+}
+
+.upload-label {
+  display: block;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #fff;
+}
+
+.upload-input {
+  width: 100%;
+  padding: 0.7rem;
+  margin-bottom: 1rem;
+  border: none;
+  border-radius: 5px;
+  background: #0f3460;
+  color: #fff;
+}
+
+.upload-input:focus {
+  outline: 2px solid #e94560;
+}
+
+#exchange-btn {
+  background: #e94560;
+  color: #fff;
+  padding: 0.7rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#exchange-btn:disabled {
+  background: #555;
+  cursor: not-allowed;
+}
+
+#exchange-btn:hover:not(:disabled) {
+  background: #ba2d46;
+}
+
+.progress-bar {
+  background: #444;
+  border-radius: 5px;
+  overflow: hidden;
+  height: 10px;
+  margin: 1rem 0;
+}
+
+.progress {
+  background: #e94560;
+  height: 100%;
+  width: 0%;
+  transition: width 0.5s ease;
+}
+
+#status-msg {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-top: 1rem;
+}
+
+.result {
+  font-size: 1.5rem;
+  color: #e94560;
+  margin-top: 1rem;
+}
+
+.popup-message {
+  position: fixed;
+  top: 20%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #0f3460;
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+
+.popup-message.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+footer {
+  text-align: center;
+  background: #0f3460;
+  color: #aaa;
+  padding: 1rem;
+}
+
+  </style>
+
+<script>
+  const apiKey = "Q3eCcPke-LSTkJezWRuv";
+
+const amountInput = document.getElementById("amount");
+const fromCurrency = document.getElementById("from-currency");
+const toCurrency = document.getElementById("to-currency");
+const exchangeBtn = document.getElementById("exchange-btn");
+const progress = document.getElementById("progress");
+const progressBar = document.getElementById("progress-bar");
+const statusMsg = document.getElementById("status-msg");
+const popupMessage = document.getElementById("popup-message");
+const resultElement = document.getElementById("result");
+
+// Populate currency options
+fetch(`https://open.er-api.com/v6/latest/USD?apikey=${apiKey}`)
+  .then((res) => res.json())
+  .then((data) => {
+    const currencies = Object.keys(data.rates);
+    currencies.forEach((currency) => {
+      fromCurrency.innerHTML += `<option value="${currency}">${currency}</option>`;
+      toCurrency.innerHTML += `<option value="${currency}">${currency}</option>`;
+    });
+  });
+
+// Handle conversion
+exchangeBtn.addEventListener("click", () => {
+  const amount = amountInput.value;
+  const from = fromCurrency.value;
+  const to = toCurrency.value;
+
+  if (!amount || isNaN(amount)) {
+    alert("Enter a valid amount!");
+    return;
+  }
+
+  exchangeBtn.disabled = true;
+  progress.style.width = "0%";
+  progressBar.style.display = "block";
+  statusMsg.textContent = "Processing...";
+
+  let width = 0;
+  const interval = setInterval(() => {
+    width += 10;
+    progress.style.width = `${width}%`;
+
+    if (width >= 100) clearInterval(interval);
+  }, 300);
+
+  fetch(`https://open.er-api.com/v6/latest/${from}?apikey=${apiKey}`)
+    .then((res) => res.json())
+    .then((data) => {
+      const rate = data.rates[to];
+      const converted = (amount * rate).toFixed(2);
+
+      resultElement.textContent = `Converted Amount: ${converted} ${to}`;
+      statusMsg.textContent = "";
+      progressBar.style.display = "none";
+
+      popupMessage.classList.add("active");
+      setTimeout(() => popupMessage.classList.remove("active"), 3000);
+
+      exchangeBtn.disabled = false;
+    });
+});
+
+</script>
